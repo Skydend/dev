@@ -72,3 +72,5 @@ resource "aws_security_group" "bastion_sg" {
     Name = "Bastion-SG"
   }
 }
+
+# cesi est un commentaire
