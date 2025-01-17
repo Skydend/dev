@@ -17,7 +17,6 @@ resource "aws_subnet" "subnet_b" {
 }
 
 resource "aws_eip" "nat" {
-  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "nat" {
