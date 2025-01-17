@@ -19,14 +19,14 @@ resource "aws_subnet" "subnet_b" {
 resource "aws_eip" "nat" {
 }
 
-resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.subnet_a.id
-
-  tags = {
-    Name = "NAT-Gateway"
-  }
-}
+# resource "aws_nat_gateway" "nat" {
+  # allocation_id = aws_eip.nat.id
+  # subnet_id     = aws_subnet.subnet_a.id
+# 
+  # tags = {
+    # Name = "NAT-Gateway"
+  # }
+# }
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.vpc.id
