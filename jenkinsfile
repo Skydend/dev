@@ -1,13 +1,13 @@
 pipeline {
     agent any
-    options {
-        // options
-        ansiColor('xterm')
-    }
+
+    // options {
+    //     // options
+    // }
 
     parameters {
-       // Parameters
-    booleanParam(name: 'destroy', defaultValue: false, description: 'True pour détruire et False pour créer')
+        // Parameters
+        choice (name: 'env', choices: ['dev', 'prod'], description: 'Choisissez l\'environnement : dev ou prod')
     }
 
     environment {
@@ -15,37 +15,49 @@ pipeline {
         AWS_DEFAULT_REGION = 'us-east-1'
     }
 
-    stages {
-        stage('iac:terraform plan') {
-            steps {
-                script {
-                    sh '''
-                        terraform init
-                        terraform plan
-                    '''
-                }
-            }
-        }
-
-        stage('confirm:deploy') {
-            steps {
-                input(id: 'confirm', message: """
-                    You choose to deploy:
-                    
-branch: ${env.GIT_BRANCH}
-                  Do you confirm the deployment""")}}
-
-        stage('iac:terraform apply') {
-            steps {
-                script {
-                    sh '''
-                        terraform init
-                        terraform apply -auto-approve
-                    '''
+stages {
+    stage('confirm:destroy_or_create') {
+        steps {
+            script {
+                // Demande explicitement si tu veux détruire ou créer l'infrastructure
+                def destroyChoice = input(id: 'confirmDestroyOrCreate', message: "Veux-tu détruire l'infrastructure ou la créer ?", parameters: [
+                    booleanParam(defaultValue: false, description: 'Cocher pour détruire', name: 'DESTROY')
+                ])
+                
+                // Si DESTROY est à true (case cochée), on demande une confirmation avant de détruire l'infrastructure
+                if (destroyChoice) {
+                    input(id: 'confirmDestroy', message: "T es sûre de vouloir détruire ton infra?")
+                    // Si confirmé, on détruit l'infrastructure avec terraform destroy
+                    sh 'terraform init'
+                    sh 'terraform destroy -auto-approve'
+                } else {
+                    // Si DESTROY est à false (case décochée), on demande une confirmation pour commencer la création
+                    input(id: 'confirmPlan', message: "T as choisie de créer une infra:\nBranch: ${env.GIT_BRANCH}\nTu confirmes le terraform plan?", ok: 'oui', cancel: 'non')
                 }
             }
         }
     }
+
+    // Si DESTROY est à false, on poursuit avec les étapes de création
+    stage('iac:terraform plan') {
+        when {
+            // Cette étape s'exécute seulement si DESTROY est à false
+            expression { params.DESTROY == false }
+        }
+        steps {
+            script {
+                // Confirmation avant d'exécuter terraform plan
+                input(id: 'confirmPlan', message: "Tu confirmes le plan de déploiement de l'infrastructure?", ok: 'oui', cancel: 'non')
+                // Exécution de terraform init et terraform plan
+                sh '''
+                    terraform init
+                    terraform plan
+                    terraform apply -auto-approve
+                '''
+            }
+        }
+    }
+}
 
     post { 
         always { 
