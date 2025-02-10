@@ -7,7 +7,7 @@ terraform {
   }
 
 backend "s3" {
-    bucket         = "kikh-terraform-state-bucket"
+    bucket         = "kikh-terraform-state-bucket2"
     key            = "terraform/state"
     region         = "us-east-1"
     dynamodb_table = "dev"
